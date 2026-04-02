@@ -20,19 +20,15 @@ import { Check, X } from 'lucide-react';
  * @param selectedAnswer - Currently selected answer (null if none)
  * @param answerRevealed - Whether to show correct/wrong feedback
  * @param onAnswer - Callback when an answer is selected
- * @param choiceCount - Number of choices to display (4, 3, or 2)
+ * @param shuffledChoices - Pre-shuffled answer choices from the hook
  */
 export function QuestionCard({
   question,
   selectedAnswer,
   answerRevealed,
   onAnswer,
-  choiceCount,
+  shuffledChoices,
 }: QuestionCardProps) {
-  // Build answer choices: correct + wrong, then shuffled
-  const allChoices = [question.correctAnswer, ...question.wrongAnswers];
-  const shuffledChoices = shuffleArray(allChoices).slice(0, choiceCount);
-
   // Get button class based on state
   const getButtonClass = (choice: string): string => {
     const baseClass = 'answer-btn flex items-center gap-3';
@@ -125,16 +121,4 @@ export function QuestionCard({
       )}
     </div>
   );
-}
-
-/**
- * Fisher-Yates shuffle for answer randomization
- */
-function shuffleArray<T>(array: T[]): T[] {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
 }

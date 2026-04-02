@@ -214,13 +214,28 @@ function getUsedQuestionIds(_state: GameState): number[] {
 /**
  * Shuffle answer choices for display
  * Ensures correct answer isn't always in the same position
+ * Uses a seed based on question id so answers don't jump around
  */
-function getShuffledAnswers(question: Question, choiceCount: number): string[] {
+function getShuffledAnswers(question: Question, choiceCount: number, seed: number): string[] {
   // Build choices array: correct answer + wrong answers
   const allChoices = [question.correctAnswer, ...question.wrongAnswers];
 
-  // Shuffle and take only the number needed for current difficulty
-  return shuffleArray(allChoices).slice(0, choiceCount);
+  // Use seed for deterministic shuffle per question
+  const shuffled = [...allChoices];
+  let currentIndex = shuffled.length;
+  let currentSeed = seed;
+  const random = () => {
+    currentSeed = (currentSeed * 1103515245 + 12345) & 0x7fffffff;
+    return currentSeed / 0x7fffffff;
+  };
+
+  while (currentIndex !== 0) {
+    const randomIndex = Math.floor(random() * currentIndex);
+    currentIndex--;
+    [shuffled[currentIndex], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[currentIndex]];
+  }
+
+  return shuffled.slice(0, choiceCount);
 }
 
 // =============================================================================
@@ -328,10 +343,11 @@ export function useGame() {
 
   /**
    * Shuffled answer choices for current question
-   * Refreshes when question or difficulty changes
+   * Uses question ID as seed for deterministic shuffling
+   * Memoized so answers don't jump around on re-renders
    */
   const currentAnswers = state.currentQuestion
-    ? getShuffledAnswers(state.currentQuestion, choiceCount)
+    ? getShuffledAnswers(state.currentQuestion, choiceCount, state.currentQuestionId)
     : [];
 
   /**

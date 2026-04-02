@@ -118,8 +118,8 @@ export interface QuestionCardProps {
   answerRevealed: boolean;
   /** Callback when an answer is selected */
   onAnswer: (answer: string) => void;
-  /** Number of answer choices to show (4, 3, or 2) */
-  choiceCount: number;
+  /** Pre-shuffled answer choices (deterministic, from useGame hook) */
+  shuffledChoices: string[];
 }
 
 /**

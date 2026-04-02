@@ -105,7 +105,7 @@ function GameScreen({ onGoHome }: GameScreenProps) {
     answerQuestion,
     handleTimeout,
     nextQuestion,
-    choiceCount,
+    currentAnswers,
     timeLimit,
     multiplier,
   } = useGame();
@@ -234,7 +234,7 @@ function GameScreen({ onGoHome }: GameScreenProps) {
           selectedAnswer={selectedAnswer}
           answerRevealed={answerRevealed}
           onAnswer={handleAnswer}
-          choiceCount={choiceCount}
+          shuffledChoices={currentAnswers}
         />
 
         {/* Progress */}
