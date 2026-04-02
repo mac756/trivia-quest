@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom base styles for the trivia game */
+@layer base {
+  body {
+    @apply bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white font-body antialiased;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+  }
+}
+
+/* Custom component classes */
+@layer components {
+  /* Card hover effect for category cards */
+  .card-hover {
+    @apply transition-all duration-300 ease-out;
+  }
+  .card-hover:hover {
+    @apply transform -translate-y-2 shadow-2xl scale-105;
+  }
+
+  /* Answer button states */
+  .answer-btn {
+    @apply w-full py-4 px-6 rounded-xl text-left font-medium transition-all duration-200;
+    @apply border-2 border-slate-600 bg-slate-800/80 backdrop-blur;
+  }
+  .answer-btn:hover:not(:disabled) {
+    @apply border-slate-400 bg-slate-700/80 shadow-lg;
+  }
+  .answer-btn:disabled {
+    @apply cursor-not-allowed opacity-80;
+  }
+  .answer-btn.correct {
+    @apply border-green-500 bg-green-600/30 text-green-300;
+  }
+  .answer-btn.wrong {
+    @apply border-red-500 bg-red-600/30 text-red-300;
+  }
+  .answer-btn.show-correct {
+    @apply border-yellow-400 bg-yellow-500/20 text-yellow-300;
+  }
+
+  /* Timer bar color transitions */
+  .timer-green {
+    @apply bg-gradient-to-r from-green-500 to-emerald-400;
+  }
+  .timer-yellow {
+    @apply bg-gradient-to-r from-yellow-500 to-amber-400;
+  }
+  .timer-red {
+    @apply bg-gradient-to-r from-red-500 to-rose-400;
+  }
+
+  /* Glassmorphism effect for cards */
+  .glass-card {
+    @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl;
+  }
+
+  /* Heart/lives animation */
+  .heart-lost {
+    @apply animate-bounce;
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-slate-800;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-600 rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-500;
+}
