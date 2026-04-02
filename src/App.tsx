@@ -28,16 +28,14 @@ import { BookOpen, Zap, Info } from 'lucide-react';
 // HOMESCREEN COMPONENT
 // ============================================================================
 
+interface HomeScreenProps {
+  onSelectCategory: (category: Category) => void;
+}
+
 /**
  * HomeScreen displays the category selection with era-themed cards
  */
-function HomeScreen() {
-  const { startGame } = useGame();
-
-  const handleCategorySelect = (category: Category) => {
-    startGame(category);
-  };
-
+function HomeScreen({ onSelectCategory }: HomeScreenProps) {
   return (
     <div className="min-h-screen bg-[#0a0a1a] p-6">
       {/* Header */}
@@ -66,7 +64,7 @@ function HomeScreen() {
             imageUrl={cat.imageUrl}
             colorPrimary={cat.colorPrimary}
             colorAccent={cat.colorAccent}
-            onSelect={handleCategorySelect}
+            onSelect={onSelectCategory}
           />
         ))}
       </div>
@@ -93,17 +91,20 @@ function HomeScreen() {
 // GAMESCREEN COMPONENT
 // ============================================================================
 
+interface GameScreenProps {
+  onGoHome: () => void;
+}
+
 /**
  * GameScreen handles the active gameplay
  */
-function GameScreen() {
+function GameScreen({ onGoHome }: GameScreenProps) {
   const {
     state,
     startGame,
     answerQuestion,
     handleTimeout,
     nextQuestion,
-    resetGame,
     choiceCount,
     timeLimit,
     multiplier,
@@ -147,13 +148,11 @@ function GameScreen() {
 
     // Auto-advance after showing feedback
     setTimeout(() => {
-      if (state.lives - (answer !== state.currentQuestion?.correctAnswer ? 0 : 1) > 0) {
-        setSelectedAnswer(null);
-        setAnswerRevealed(false);
-        nextQuestion();
-      }
+      setSelectedAnswer(null);
+      setAnswerRevealed(false);
+      nextQuestion();
     }, 1500);
-  }, [selectedAnswer, answerRevealed, answerQuestion, nextQuestion, state.lives, state.currentQuestion?.correctAnswer]);
+  }, [selectedAnswer, answerRevealed, answerQuestion, nextQuestion]);
 
   // Handle play again
   const handlePlayAgain = () => {
@@ -164,13 +163,8 @@ function GameScreen() {
     }
   };
 
-  // Handle go home
-  const handleGoHome = () => {
-    resetGame();
-  };
-
   if (!state.currentQuestion || !currentCategory) {
-    return <HomeScreen />;
+    return <HomeScreen onSelectCategory={(cat) => startGame(cat)} />;
   }
 
   return (
@@ -187,7 +181,7 @@ function GameScreen() {
         <div className="flex items-center justify-between mb-4">
           {/* Back to Home */}
           <button
-            onClick={handleGoHome}
+            onClick={onGoHome}
             className="text-white/60 hover:text-white flex items-center gap-2 text-sm"
           >
             ← Home
@@ -259,7 +253,7 @@ function GameScreen() {
         category={state.selectedCategory!}
         totalQuestions={state.questionsAnswered}
         onPlayAgain={handlePlayAgain}
-        onGoHome={handleGoHome}
+        onGoHome={onGoHome}
       />
     </div>
   );
@@ -271,16 +265,25 @@ function GameScreen() {
 
 /**
  * Main App component
- * Switches between Home and Game screens based on game state
+ * Single source of truth for game state
  */
 function App() {
-  const { state } = useGame();
+  const { state, startGame, resetGame } = useGame();
 
-  if (state.gameStatus === 'idle') {
-    return <HomeScreen />;
+  const handleSelectCategory = (category: Category) => {
+    startGame(category);
+  };
+
+  const handleGoHome = () => {
+    resetGame();
+  };
+
+  // Show home if idle, game if playing
+  if (state.gameStatus === 'idle' || !state.currentQuestion) {
+    return <HomeScreen onSelectCategory={handleSelectCategory} />;
   }
 
-  return <GameScreen />;
+  return <GameScreen onGoHome={handleGoHome} />;
 }
 
 export default App;
