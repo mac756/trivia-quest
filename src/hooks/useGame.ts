@@ -44,6 +44,7 @@ const initialState: GameState = {
   selectedCategory: null,
   questionsAnswered: 0,
   currentQuestionId: 0,
+  usedQuestionTexts: new Set<string>(),
 };
 
 // =============================================================================
@@ -68,12 +69,19 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       const shuffled = shuffleArray([...categoryQuestions]);
       const firstQuestion = shuffled[0] || null;
 
+      // Track this question as used
+      const usedTexts = new Set<string>();
+      if (firstQuestion) {
+        usedTexts.add(firstQuestion.question);
+      }
+
       return {
         ...initialState,
         gameStatus: 'playing',
         selectedCategory: action.category,
         currentQuestion: firstQuestion,
         currentQuestionId: 0,
+        usedQuestionTexts: usedTexts,
         // Track used question IDs to avoid repeats
         questionsAnswered: 0,
       };
@@ -135,24 +143,30 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       // Get fresh set of questions for the category
       const categoryQuestions = getQuestionsByCategory(state.selectedCategory!);
 
-      // Get questions we haven't used yet
-      const usedQuestions = getUsedQuestionIds(state);
+      // Filter out already used questions
       const availableQuestions = categoryQuestions.filter(
-        (_, index) => !usedQuestions.includes(index)
+        q => !state.usedQuestionTexts.has(q.question)
       );
 
       // If we've used all questions, reshuffle (loop back)
-      const allQuestions = availableQuestions.length > 0
+      const questionsToChooseFrom = availableQuestions.length > 0
         ? availableQuestions
         : shuffleArray([...categoryQuestions]);
 
-      const nextQuestion = allQuestions[0] || null;
+      const nextQuestion = questionsToChooseFrom[0] || null;
       const nextId = state.currentQuestionId + 1;
+
+      // Add new question to used set
+      const newUsedTexts = new Set(state.usedQuestionTexts);
+      if (nextQuestion) {
+        newUsedTexts.add(nextQuestion.question);
+      }
 
       return {
         ...state,
         currentQuestion: nextQuestion,
         currentQuestionId: nextId,
+        usedQuestionTexts: newUsedTexts,
       };
     }
 
@@ -202,25 +216,31 @@ function shuffleArray<T>(array: T[]): T[] {
 }
 
 /**
- * Get list of used question IDs to avoid repeats
- * Currently tracks up to currentQuestionId
+ * Get a hash code for a question to use as a stable seed
+ * This ensures the same question always gets the same answer shuffle
  */
-function getUsedQuestionIds(_state: GameState): number[] {
-  // For simplicity, we'll regenerate questions and filter
-  // In a production app, you'd track this more efficiently
-  return [];
+function getQuestionSeed(question: Question): number {
+  // Simple hash based on question text
+  let hash = 0;
+  for (let i = 0; i < question.question.length; i++) {
+    const char = question.question.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return Math.abs(hash);
 }
 
 /**
  * Shuffle answer choices for display
  * Ensures correct answer isn't always in the same position
- * Uses a seed based on question id so answers don't jump around
+ * Uses a seed based on question content so answers are deterministic
  */
-function getShuffledAnswers(question: Question, choiceCount: number, seed: number): string[] {
+function getShuffledAnswers(question: Question, choiceCount: number): string[] {
   // Build choices array: correct answer + wrong answers
   const allChoices = [question.correctAnswer, ...question.wrongAnswers];
 
-  // Use seed for deterministic shuffle per question
+  // Use question hash for deterministic shuffle per question
+  const seed = getQuestionSeed(question);
   const shuffled = [...allChoices];
   let currentIndex = shuffled.length;
   let currentSeed = seed;
@@ -343,11 +363,11 @@ export function useGame() {
 
   /**
    * Shuffled answer choices for current question
-   * Uses question ID as seed for deterministic shuffling
+   * Uses question content hash for deterministic shuffling
    * Memoized so answers don't jump around on re-renders
    */
   const currentAnswers = state.currentQuestion
-    ? getShuffledAnswers(state.currentQuestion, choiceCount, state.currentQuestionId)
+    ? getShuffledAnswers(state.currentQuestion, choiceCount)
     : [];
 
   /**

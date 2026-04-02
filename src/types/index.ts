@@ -71,6 +71,8 @@ export interface GameState {
   questionsAnswered: number;
   /** ID of the current question (for tracking unique questions used) */
   currentQuestionId: number;
+  /** Set of used question texts to avoid repeats in this game */
+  usedQuestionTexts: Set<string>;
 }
 
 /**
